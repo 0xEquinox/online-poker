@@ -2,10 +2,11 @@
 
 use crate::deck::{Card, Deck};
 use crate::game::Game;
+use crate::models::Player;
 use crate::Lobbies;
+use dashmap::DashMap;
 use rocket::serde::json::Json;
-use rocket::serde::Serialize;
-
+use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 
 #[derive(Serialize, Clone)]
@@ -13,6 +14,13 @@ use rocket::State;
 pub struct Lobby {
     pub code: i32,
     pub game: Game,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(crate = "rocket::serde")]
+struct JoinData {
+    code: i32,
+    player: Player,
 }
 
 // First thing is to create new lobbies
@@ -30,4 +38,26 @@ pub fn create_lobby(lobbies: &State<Lobbies>) -> Json<Lobby> {
     lobbies.lobbies.insert(code, lobby.clone());
 
     return Json(lobby.clone());
+}
+
+#[post("/join_lobby", data = "<join_data>", format = "application/json")]
+pub fn join_lobby(join_data: Json<JoinData>, lobbies: &State<Lobbies>) -> Json<Lobby> {
+    let mut binding = lobbies.lobbies.get_mut(&join_data.code).unwrap();
+    let lobby = binding.value_mut();
+
+    lobby.game.players.push(join_data.player);
+
+    return Json(lobby.clone());
+}
+
+#[get("/get_lobbies")]
+pub fn get_lobbies(lobbies: &State<Lobbies>) -> Json<Vec<Lobby>> {
+    let mut lobbies_vec: Vec<Lobby> = Vec::new();
+
+    lobbies
+        .lobbies
+        .iter()
+        .for_each(|lobby| lobbies_vec.push(lobby.value().clone()));
+
+    return Json(lobbies_vec);
 }

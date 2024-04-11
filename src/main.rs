@@ -22,4 +22,6 @@ fn rocket() -> Rocket<Build> {
             lobbies: DashMap::new(),
         })
         .mount("/", routes![lobby::create_lobby])
+        .mount("/", routes![lobby::join_lobby])
+        .mount("/", routes![lobby::get_lobbies])
 }

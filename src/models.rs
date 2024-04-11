@@ -1,7 +1,7 @@
-use rocket::serde::Serialize;
-use crate::deck::{Card};
+use crate::deck::Card;
+use rocket::serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct Player {
     pub money: u64,
