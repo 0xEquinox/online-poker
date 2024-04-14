@@ -7,4 +7,5 @@ pub struct Player {
     pub money: u64,
     pub hand: (Card, Card),
     pub current_bet: u64,
+    pub id: i32,
 }

@@ -59,7 +59,7 @@ enum Action {
     Fold,
     Check,
     Call,
-    Raise { value: u64 },
+    Raise(u64),
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone)]
@@ -71,7 +71,24 @@ pub struct Message {
 }
 
 #[post("/make_move", data = "<message>", format = "application/json")]
-pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>) {}
+pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>) {
+    match message.action {
+        Action::Fold => {}
+        Action::Check => {}
+        Action::Call => call(message.player_id, message.room_code, lobbies),
+        Action::Raise(amount) => raise(amount, message.player_id, message.room_code, lobbies),
+    }
+}
+
+fn call(player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {
+    // Find the correct lobby
+    let mut binding = lobbies.lobbies.get_mut(&room_code).unwrap();
+    let lobby = binding.value_mut();
+
+    // Find the correct player
+}
+
+fn raise(amount: u64, player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {}
 
 // This function returns an infinite stream of events which will allow the clients to recieve updates in real time as things happen
 // This does not allow for users to send updates to the server indefinetly, it's only a one way connection, which is perfect
