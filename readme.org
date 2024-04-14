@@ -1,12 +1,12 @@
 #+title: Rust Poker!
 
 * TODO Rust Poker Roadmap [0/2]
-- [ ] Lobbies
-  - [ ] Back end Join Codes
+- [-] Lobbies
+  - [X] Back end Join Codes
   - [ ] Front end join screen
-  - [ ] Lobbies with players
-  - [ ] Lobbies with games
-  - [ ] Create Lobbies
+  - [X] Lobbies with players
+  - [X] Lobbies with games
+  - [X] Create Lobbies
 - [ ] Games [0/3]
   - [ ] Games with money
   - [ ] Front end table & cards

@@ -22,7 +22,7 @@ fn rocket() -> Rocket<Build> {
             lobbies: DashMap::new(),
         })
         .mount(
-            "/",
+            "/api/",
             routes![lobby::create_lobby, lobby::join_lobby, lobby::get_lobbies],
         )
 }
