@@ -8,4 +8,5 @@ pub struct Player {
     pub hand: (Card, Card),
     pub current_bet: u64,
     pub id: i32,
+    pub is_in_round: bool,
 }
