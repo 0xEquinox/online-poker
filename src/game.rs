@@ -1,7 +1,8 @@
 use crate::deck::{Card, Deck};
 use crate::models::Player;
 use crate::Lobbies;
-use rocket::serde::Serialize;
+use rocket::serde::json::Json;
+use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 
 #[derive(Serialize, Clone)]
@@ -51,3 +52,29 @@ impl GameSettings {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Copy, Clone)]
+#[serde(crate = "rocket::serde")]
+enum Action {
+    Fold,
+    Check,
+    Call,
+    Raise { value: u64 },
+}
+
+#[derive(Serialize, Deserialize, Copy, Clone)]
+#[serde(crate = "rocket::serde")]
+pub struct Message {
+    action: Action,
+    room_code: i32,
+    player_id: i32,
+}
+
+#[post("/make_move", data = "<message>", format = "application/json")]
+pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>) {}
+
+// This function returns an infinite stream of events which will allow the clients to recieve updates in real time as things happen
+// This does not allow for users to send updates to the server indefinetly, it's only a one way connection, which is perfect
+//#[get("/events")]
+//async fn events(lobbies: &State<Lobbies>, mut end: Shutdown) -> EventStream![] { //TODO Implement this
+//}
