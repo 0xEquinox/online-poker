@@ -18,7 +18,7 @@ pub struct Lobby {
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(crate = "rocket::serde")]
-struct JoinData {
+pub struct JoinData {
     code: i32,
     player: Player,
 }

@@ -4,6 +4,7 @@ use crate::Lobbies;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
+use ws::WebSocket;
 
 #[derive(Serialize, Clone)]
 #[serde(crate = "rocket::serde")]
@@ -55,7 +56,7 @@ impl GameSettings {
 
 #[derive(Serialize, Deserialize, Copy, Clone)]
 #[serde(crate = "rocket::serde")]
-enum Action {
+pub enum Action {
     Fold,
     Check,
     Call,
@@ -65,9 +66,9 @@ enum Action {
 #[derive(Serialize, Deserialize, Copy, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct Message {
-    action: Action,
-    room_code: i32,
-    player_id: i32,
+    pub action: Action,
+    pub room_code: i32,
+    pub player_id: i32,
 }
 
 #[post("/make_move", data = "<message>", format = "application/json")]
@@ -141,9 +142,3 @@ fn raise(amount: u64, player_id: i32, room_code: i32, lobbies: &State<Lobbies>) 
     game.pot += amount;
     game.current_bet = player.current_bet;
 }
-
-// This function returns an infinite stream of events which will allow the clients to recieve updates in real time as things happen
-// This does not allow for users to send updates to the server indefinetly, it's only a one way connection, which is perfect
-//#[get("/events")]
-//async fn events(lobbies: &State<Lobbies>, mut end: Shutdown) -> EventStream![] { //TODO Implement this
-//}

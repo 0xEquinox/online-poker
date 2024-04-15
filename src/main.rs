@@ -1,14 +1,13 @@
 #[macro_use]
 extern crate rocket;
 use dashmap::DashMap;
-use rocket::serde::json::Json;
-use rocket::{Build, Rocket};
-use std::collections::HashMap;
+use rocket::{fs::relative, fs::FileServer, tokio::sync::broadcast::channel, Build, Rocket};
 
 mod deck;
 mod game;
 mod lobby;
 mod models;
+mod websocket;
 
 // The one important piece of state for this program is the hashmap of lobbies
 struct Lobbies {
@@ -21,12 +20,16 @@ fn rocket() -> Rocket<Build> {
         .manage(Lobbies {
             lobbies: DashMap::new(),
         })
+        .manage(channel::<game::Message>(1024).0)
         .mount(
             "/api/",
-            routes![lobby::create_lobby, lobby::join_lobby, lobby::get_lobbies],
+            routes![
+                lobby::create_lobby,
+                lobby::join_lobby,
+                lobby::get_lobbies,
+                game::make_move,
+                websocket::events
+            ],
         )
-}
-
-fn test() {
-    println!("this is at test");
+        .mount("/", FileServer::from(relative!("static")))
 }
