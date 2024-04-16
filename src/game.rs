@@ -3,6 +3,7 @@ use crate::models::Player;
 use crate::Lobbies;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
+use rocket::tokio::sync::broadcast::{channel, error::RecvError, Sender};
 use rocket::State;
 use ws::WebSocket;
 
@@ -72,18 +73,23 @@ pub struct Message {
 }
 
 #[post("/make_move", data = "<message>", format = "application/json")]
-pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>) {
+pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>, queue: &State<Sender<Message>>) {
     match message.action {
         Action::Fold => fold(message.player_id, message.room_code, lobbies),
         Action::Check => check(),
         Action::Call => call(message.player_id, message.room_code, lobbies),
         Action::Raise(amount) => raise(amount, message.player_id, message.room_code, lobbies),
     }
+
+    let _ = queue.send(*message);
 }
 
-fn check() {}
+fn check() {
+    println!("Player checks");
+}
 
 fn fold(player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {
+    println!("Player Folds");
     let mut binding = lobbies.lobbies.get_mut(&room_code).unwrap();
     let lobby = binding.value_mut();
     let game = &mut lobby.game;
@@ -101,6 +107,7 @@ fn fold(player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {
 }
 
 fn call(player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {
+    println!("Player calls");
     // Find the correct lobby
     let mut binding = lobbies.lobbies.get_mut(&room_code).unwrap();
     let lobby = binding.value_mut();
@@ -124,6 +131,7 @@ fn call(player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {
 }
 
 fn raise(amount: u64, player_id: i32, room_code: i32, lobbies: &State<Lobbies>) {
+    println!("Player raises");
     let mut binding = lobbies.lobbies.get_mut(&room_code).unwrap();
     let lobby = binding.value_mut();
     let game = &mut lobby.game;

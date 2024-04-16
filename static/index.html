@@ -7,18 +7,33 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Welcome to My Poker Game!</h1>
-     <div id="join-lobby">
+    <div id="join-lobby">
         <h2>Join a Lobby</h2>
         <form id="join-lobby-form">
             <label for="room-code">Room Code:</label>
             <input type="text" id="room-code" name="room-code" required>
             <button type="submit">Join Lobby</button>
         </form>
-    </div
-     <div id="game-container">
-        <!-- Your game interface elements go here -->
     </div>
+    <div id="game-container" style="display: none;">
+        <h2>Game Interface</h2>
+        <div id="pot">Pot: $0</div>
+        <div id="player-cards">
+            <!-- Placeholder for user's cards -->
+            <!-- Example: <div class="card">Card 1</div> <div class="card">Card 2</div> -->
+        </div>
+         <div id="actions">
+    <button id="check">Check</button>
+    <button id="fold">Fold</button>
+    <button id="raise">Raise</button>
+    <button id="call">Call</button>
+    <!-- Slider for selecting raise amount -->
+    <input type="range" id="raise-amount" min="0" max="1000" step="10" value="0">
+    <!-- Display the selected raise amount -->
+    <output for="raise-amount" id="raise-value">0</output>
+    <!-- You can style and position these elements as needed using CSS -->
+</div>
+   </div>
     <script src="script.js"></script>
 </body>
 </html>

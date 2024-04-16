@@ -10,8 +10,8 @@ pub struct Deck {
 #[derive(Serialize, Deserialize, Copy, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct Card {
-    value: i32,
-    suit: Suit,
+    pub value: i32,
+    pub suit: Suit,
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone)]

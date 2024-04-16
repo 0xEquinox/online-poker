@@ -20,7 +20,6 @@ pub struct Lobby {
 #[serde(crate = "rocket::serde")]
 pub struct JoinData {
     code: i32,
-    player: Player,
 }
 
 // First thing is to create new lobbies
@@ -45,7 +44,11 @@ pub fn join_lobby(join_data: Json<JoinData>, lobbies: &State<Lobbies>) -> Json<L
     let mut binding = lobbies.lobbies.get_mut(&join_data.code).unwrap();
     let lobby = binding.value_mut();
 
-    lobby.game.players.push(join_data.player);
+    let player = Player::new(lobby.game.players.len() as i32);
+
+    lobby.game.players.push(player);
+
+    println!("Player joined the lobby");
 
     return Json(lobby.clone());
 }
