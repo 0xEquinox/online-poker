@@ -7,14 +7,14 @@
   - [X] Lobbies with players
   - [X] Lobbies with games
   - [X] Create Lobbies
-- [ ] Games [0/3]
-  - [ ] Games with money
+- [-] Games [1/3]
+  - [X] Games with money
   - [ ] Front end table & cards
-  - [ ] Functionality [0/5]
-    - [ ] Check
-    - [ ] Fold
-    - [ ] Raise
-      - [ ] Min Raise checks
+  - [-] Functionality [3/5]
+    - [X] Check
+    - [X] Fold
+    - [X] Raise
+      - [X] Min Raise checks
     - [ ] Call
     - [ ] Blinds
       - [ ] Rotation
