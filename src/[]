@@ -27,9 +27,9 @@ impl Player {
                 },
             ),
             current_bet: 0,
-            id: id,
+            id,
             is_in_round: false,
-            pos: id,
+            pos: id, 
         }
     }
 }

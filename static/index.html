@@ -18,22 +18,32 @@
     <div id="game-container" style="display: none;">
         <h2>Game Interface</h2>
         <div id="pot">Pot: $0</div>
+        <h3>Table: </h3>
+        <div id="table">
+
+        </div>
+        <br/>
+        <br/>
+        <h3>Hand: </h3>
         <div id="player-cards">
             <!-- Placeholder for user's cards -->
-            <!-- Example: <div class="card">Card 1</div> <div class="card">Card 2</div> -->
         </div>
-         <div id="actions">
-    <button id="check">Check</button>
-    <button id="fold">Fold</button>
-    <button id="raise">Raise</button>
-    <button id="call">Call</button>
-    <!-- Slider for selecting raise amount -->
-    <input type="range" id="raise-amount" min="0" max="1000" step="10" value="0">
-    <!-- Display the selected raise amount -->
-    <output for="raise-amount" id="raise-value">0</output>
-    <!-- You can style and position these elements as needed using CSS -->
-</div>
-   </div>
+            <div id="actions">
+                <button id="check">Check</button>
+                <button id="fold">Fold</button>
+                <button id="raise">Raise</button>
+                <input type="range" id="raise-amount" min="0" max="1000" step="10" value="0">
+                <!-- Display the selected raise amount -->
+                <output for="raise-amount" id="raise-value">0</output>
+                <button id="call">Call</button>
+                <button id="start">Start</button>
+            </div>
+            <div id="stats">
+                <div id="current-bet">Bet: $0</div>
+                <div id="money">Money: $0</div>
+                <div id="is-my-turn">Is My Turn: false</div>
+            </div>
+        </div>
     <script src="script.js"></script>
 </body>
 </html>
