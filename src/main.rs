@@ -20,7 +20,7 @@ fn rocket() -> Rocket<Build> {
         .manage(Lobbies {
             lobbies: DashMap::new(),
         })
-        .manage(channel::<game::Message>(1024).0)
+        .manage(channel::<game::OutMessage>(1024).0)
         .mount(
             "/api/",
             routes![

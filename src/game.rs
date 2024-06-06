@@ -1,13 +1,13 @@
 use crate::deck::{Card, Deck};
 use crate::models::Player;
 use crate::Lobbies;
+use rocket::http::hyper::upgrade;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::tokio::sync::broadcast::{channel, error::RecvError, Sender};
 use rocket::State;
-use ws::WebSocket;
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 #[serde(crate = "rocket::serde")]
 pub enum GameState {
     Deal,
@@ -17,7 +17,7 @@ pub enum GameState {
     River,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct Game {
     pub settings: GameSettings,
@@ -49,7 +49,7 @@ impl Game {
     }
 }
 
-#[derive(Serialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct GameSettings {
     pub min_raise: u32, // As a percentage of the pot ie 0.5 is 50%
@@ -85,16 +85,36 @@ pub enum Action {
     DealRiver([Card; 1]),
 }
 
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct Message {
+struct GameUpdate {
+    pot: u32,
+    current_bet: u32,
+    big_blind_pos: u32,
+    small_blind_pos: u32,
+    dealer_pos: u32,
+    players: Vec<u32>
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(crate = "rocket::serde")]
+pub struct InMessage {
     pub action: Action,
     pub room_code: i32,
     pub player_id: i32,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(crate = "rocket::serde")]
+pub struct OutMessage {
+    pub action: Action,
+    pub room_code: i32,
+    pub player_id: i32,
+    pub game: Game
+}
+
 #[post("/make_move", data = "<message>", format = "application/json")]
-pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>, queue: &State<Sender<Message>>) {
+pub fn make_move(message: Json<InMessage>, lobbies: &State<Lobbies>, queue: &State<Sender<OutMessage>>) {
     match message.action {
         Action::Fold => {
             fold(message.player_id, message.room_code, lobbies);
@@ -116,10 +136,19 @@ pub fn make_move(message: Json<Message>, lobbies: &State<Lobbies>, queue: &State
         _ => eprintln!("Invalid Move"),
     }
 
-    let _ = queue.send(*message);
+    let game = &lobbies.lobbies.get(&message.room_code).unwrap().game;
+
+    let message = OutMessage {
+        action: message.action,
+        room_code: message.room_code,
+        player_id: message.player_id,
+        game: game.clone()
+    };
+
+    let _ = queue.send(message);
 }
 
-fn next_turn(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<Message>>) {
+fn next_turn(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<OutMessage>>) {
     println!("Moving to next player");
     let game = &lobbies.lobbies.get(&room_code).unwrap().game;
 
@@ -132,10 +161,11 @@ fn next_turn(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<Mess
     }
 
     // Let the next player know it is their turnYourTurn
-    let next_player_message = Message {
+    let next_player_message = OutMessage {
         action: Action::YourTurn,
         room_code,
         player_id: next_player_id,
+        game: game.clone()
     };
 
     let _ = queue.send(next_player_message);
@@ -208,38 +238,38 @@ fn raise(amount: u64, player_id: i32, room_code: i32, lobbies: &State<Lobbies>) 
     game.current_bet = player.current_bet;
 }
 
-fn start(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<Message>>) {
+fn start(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<OutMessage>>) {
     let mut binding = lobbies.lobbies.get_mut(&room_code).unwrap();
     let lobby = binding.value_mut();
     let game = &mut lobby.game;
-    let players = &mut game.players;
+
+    let mut cloned_game = game.clone();
+    // Update all the game values for anti
+    game.pot = cloned_game.players.len() as u64 * cloned_game.settings.small_blind as u64;
+    cloned_game.pot = game.pot;
+
+    for player in &mut *cloned_game.players {
+        player.current_bet += cloned_game.settings.small_blind as u64;
+    }
 
     // Construct a message for the event queue, will need one message per player
-    for player in &mut *players {
-        let message = Message {
+    for player in &mut *game.players {
+        let message = OutMessage {
             action: Action::DealPlayer([game.deck.draw(), game.deck.draw()]),
             player_id: player.id, // -1 for dealer
             room_code,
+            game: cloned_game.clone()
         };
 
         let _ = queue.send(message);
     }
 
-    // Also send out the anti message
-    for player in players {
-        let message = Message {
-            action: Action::Anti(game.settings.small_blind as u64),
-            player_id: player.id, // -1 for dealer
-            room_code,
-        };
-
-        let _ = queue.send(message);
-    }
     // Tell the first player it's their turn
-    let message = Message {
+    let message = OutMessage {
         action: Action::YourTurn,
         player_id: 0,
         room_code,
+        game: game.clone()
     };
 
     let _ = queue.send(message);

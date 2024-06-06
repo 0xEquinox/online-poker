@@ -2,10 +2,10 @@ use rocket::{Shutdown, State };
 use rocket::tokio::sync::broadcast::{error::RecvError, channel, Sender};
 use rocket::response::stream::{EventStream, Event};
 use rocket::tokio::select;
-use crate::game::Message;
+use crate::game::OutMessage;
 
 #[get("/events")]
-pub async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventStream![] {
+pub async fn events(queue: &State<Sender<OutMessage>>, mut end: Shutdown) -> EventStream![] {
     let mut rx = queue.subscribe();
 
     EventStream! {

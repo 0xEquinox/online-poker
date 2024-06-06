@@ -23,18 +23,23 @@ pub struct JoinData {
 }
 
 // First thing is to create new lobbies
-#[get("/create_lobby")]
-pub fn create_lobby(lobbies: &State<Lobbies>) -> Json<Lobby> {
+#[post("/create_lobby", data = "<join_data>", format = "application/json")]
+pub fn create_lobby(join_data: Json<JoinData>, lobbies: &State<Lobbies>) -> Json<Lobby> {
     // Generating a code is easy just use the number of open lobbies
-    let code = lobbies.lobbies.len() as i32;
+    let code = join_data.code;
 
     // Games will first be created with a default cosntructor and then users will have the option of changing the setttings later
     let game = Game::new();
 
-    let lobby = Lobby { code, game };
+    let mut lobby = Lobby { code, game };
+    let player = Player::new(lobby.game.players.len() as i32);
+
+    lobby.game.players.push(player);
+
 
     // Add lobby to the state
     lobbies.lobbies.insert(code, lobby.clone());
+
 
     return Json(lobby.clone());
 }

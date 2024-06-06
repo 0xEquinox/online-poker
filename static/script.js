@@ -10,7 +10,8 @@ let player = { // Player state
 }; // TODO: make not global variables
 
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('join-lobby-form');
+    const join_form = document.getElementById('join-lobby-form');
+    const create_form = document.getElementById('create-lobby-form');
     // Update buttons based on player's current bet
     const raiseButton = document.getElementById('raise');
 
@@ -40,10 +41,44 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('raise-value').innerText = this.value;
     });
 
-    form.addEventListener('submit', function(event) {
+    create_form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        roomCode = document.getElementById('create-room-code').value;
+        player.roomCode = parseInt(roomCode);
+
+        const data = {
+            code: player.roomCode
+        };
+
+        fetch('/api/create_lobby', {
+            method: 'POST',
+            headers: {
+                'Content-Type' : 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+
+        .then(response => response.json())
+        .then(lobby => {
+            console.log('Joined lobby:', lobby);
+            document.getElementById('join-lobby').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+
+            player.id = lobby.game.players[lobby.game.players.length - 1].id
+            player.money = lobby.game.settings.starting_money;
+
+            updateUI()
+        })
+        .catch(error => {
+            console.error('Error joining lobby:', error);
+            // Handle errors, e.g., display an error message to the user
+        });
+    });
+
+    join_form.addEventListener('submit', function(event) {
         event.preventDefault();
 
-        roomCode = document.getElementById('room-code').value;
+        roomCode = document.getElementById('join-room-code').value;
 
         player.roomCode = parseInt(roomCode);
 
@@ -169,6 +204,17 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('pot').innerText = `Pot: $${potAmount}`;
         }
 
+        function updateGameValues(game) {
+            // Update player values
+            let server_player = game.players[player.id];
+
+            player.money = server_player.money;
+            player.current_bet = server_player.current_bet;
+
+            // Update game values
+            pot = game.pot;
+        }
+
         function handleEvent(eventData) {
             console.log("Received event:", eventData);
 
@@ -177,23 +223,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 //return;
             }
 
-            if (eventData.action.Raise !== undefined) {
-                raiseAmount = eventData.action.Raise;
-                if (player.id == eventData.player_id) {
-                    player.money -= raiseAmount;
-                    player.currentBet += raiseAmount;
-                }
-                pot += raiseAmount;
-            } else if (player.id === eventData.player_id && eventData.action.DealPlayer !== undefined) {
+            if (player.id === eventData.player_id) {
+                updateGameValues(eventData.game);
+            }
+
+            if (player.id === eventData.player_id && eventData.action.DealPlayer !== undefined) {
                 player.hand = eventData.action.DealPlayer;
                 console.log("Player Hand: ", player.hand);
-            } else if (eventData.action.Anti !== undefined) {
-                anti = eventData.action.Anti;
-                if (player.id == eventData.player_id) {
-                    player.money -= anti;
-                    player.currentBet += anti;
-                }
-                pot += anti;
             } else if (eventData.action === "YourTurn" && player.id === eventData.player_id) {
                 console.log("it is now this players turn");
                 player.isMyTurn = true;
