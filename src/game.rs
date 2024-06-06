@@ -135,28 +135,22 @@ pub fn make_move(message: Json<InMessage>, lobbies: &State<Lobbies>, queue: &Sta
         Action::Start => start(message.room_code, lobbies, queue),
         _ => eprintln!("Invalid Move"),
     }
-
-    let game = &lobbies.lobbies.get(&message.room_code).unwrap().game;
-
-    let message = OutMessage {
-        action: message.action,
-        room_code: message.room_code,
-        player_id: message.player_id,
-        game: game.clone()
-    };
-
-    let _ = queue.send(message);
 }
 
 fn next_turn(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<OutMessage>>) {
     println!("Moving to next player");
-    let game = &lobbies.lobbies.get(&room_code).unwrap().game;
+    let mut binding = lobbies.lobbies.get_mut(&room_code).unwrap();
+    let lobby = binding.value_mut();
+    let game = &mut lobby.game;
 
     let current_player_id = game.current_players_turn;
-    let mut next_player_id: i32 = current_player_id as i32 + 1;
+    let mut next_player_id: u32 = current_player_id + 1;
+
+    println!("Moving to player {}'s turn", next_player_id);
 
     // Check if it has to be wrapped around
-    if current_player_id as usize == game.players.len() - 1 {
+    if next_player_id as usize == game.players.len() {
+        println!("Player {} does not exist, moving to player 0's turn", next_player_id);
         next_player_id = 0;
     }
 
@@ -164,9 +158,11 @@ fn next_turn(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<OutM
     let next_player_message = OutMessage {
         action: Action::YourTurn,
         room_code,
-        player_id: next_player_id,
+        player_id: next_player_id as i32,
         game: game.clone()
     };
+
+    game.current_players_turn = next_player_id;
 
     let _ = queue.send(next_player_message);
 }
@@ -233,6 +229,7 @@ fn raise(amount: u64, player_id: i32, room_code: i32, lobbies: &State<Lobbies>) 
     let player = &mut player[0];
 
     // Set the game bet to the player's bet
+    player.money -= amount;
     player.current_bet += amount;
     game.pot += amount;
     game.current_bet = player.current_bet;
@@ -250,6 +247,12 @@ fn start(room_code: i32, lobbies: &State<Lobbies>, queue: &State<Sender<OutMessa
 
     for player in &mut *cloned_game.players {
         player.current_bet += cloned_game.settings.small_blind as u64;
+        player.money -= cloned_game.settings.small_blind as u64;
+    }
+
+    for player in &mut *game.players {
+        player.current_bet += game.settings.small_blind as u64;
+        player.money -= game.settings.small_blind as u64;
     }
 
     // Construct a message for the event queue, will need one message per player

@@ -207,9 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateGameValues(game) {
             // Update player values
             let server_player = game.players[player.id];
+            console.log("server player money: " + server_player.money + " server player bet: " + server_player.current_bet);
 
             player.money = server_player.money;
-            player.current_bet = server_player.current_bet;
+            player.currentBet = server_player.current_bet;
 
             // Update game values
             pot = game.pot;
@@ -223,9 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 //return;
             }
 
-            if (player.id === eventData.player_id) {
                 updateGameValues(eventData.game);
-            }
 
             if (player.id === eventData.player_id && eventData.action.DealPlayer !== undefined) {
                 player.hand = eventData.action.DealPlayer;
